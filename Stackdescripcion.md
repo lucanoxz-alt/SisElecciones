@@ -1,4 +1,3 @@
-# Stack y Descripción del Proyecto — Sistema de Elecciones UNP
 
 ## Base de datos creada en phpMyAdmin
 
@@ -8,75 +7,65 @@ El script crea la base:
 elecciones_unp
 ```
 
-Contiene **27 tablas** en total:
+Y contiene 25 tablas, entre ellas:
 
 ```text
-acta_electoral
-candidato
-cargo_admin
-cargo_categoria_permitida
-cargo_electoral
-cargo_excluido_sorteo
-constancia_voto
+facultad
 departamento
 docente
-facultad
-firma_acta
-impugnacion_electoral
-lista_electoral
-log_auditoria
-mesa_electoral
-mesa_sufragio          ← generada por JPA/Hibernate
-miembro_mesa
-observacion_electoral
-padron_electoral
-padron_mesa            ← generada por JPA/Hibernate
-parametro_global
-personero
 proceso_electoral
-sesion_activa
+cargo_electoral
+lista_electoral
+candidato
 tacha
-usuario
+personero
+padron_electoral
+mesa_electoral
+miembro_mesa
 voto
+acta_electoral
+firma_acta
+constancia_voto
+observacion_electoral
+impugnacion_electoral
+usuario
+sesion_activa
+log_auditoria
 ```
-
-> **Nota:** `mesa_sufragio` y `padron_mesa` son tablas generadas automáticamente por
-> JPA/Hibernate del backend Spring Boot. Presentan columnas duplicadas
-> (`proceso_id` / `id_proceso` y `docente_id` / `id_docente`) que son un
-> artefacto del mapeo ORM y no representan redundancia de diseño.
 
 La importación fue probada directamente contra el MariaDB de XAMPP y se verificó que las tablas fueron creadas correctamente.
 
-Para importar el schema manualmente:
+Para importarlo manualmente:
 
-1. Abre phpMyAdmin en `http://localhost:8012/phpmyadmin`.
-2. Selecciona **Importar**.
-3. Elige `Base de Datos/01_schema.sql`.
-4. Presiona **Continuar**.
+1. Abre phpMyAdmin.
+2. Entra a `http://localhost:8012/phpmyadmin`.
+3. Selecciona **Importar**.
+4. Elige `01_schema.sql`.
+5. Presiona **Continuar**.
 
-El script no modifica bases existentes como `gestion_familiar`, `hotel` o `sistemabiblioteca`.
-
----
+El script no modifica tus bases anteriores como `gestion_familiar`, `hotel` o `sistemabiblioteca`.
 
 ## Backend
 
-| Tecnología      | Versión |
-|-----------------|---------|
-| Java            | 21      |
-| Spring Boot     | 3.5     |
-| Spring Web      | —       |
-| Spring Data JPA | —       |
-| Spring Security | —       |
-| MariaDB Driver  | —       |
-| Maven           | —       |
-
-El endpoint de salud inicial es:
+El backend está preparado con:
 
 ```text
-GET http://localhost:8080/api/health
+Java 21
+Spring Boot 3.5
+Spring Web
+Spring Data JPA
+Spring Security
+MariaDB Driver
+Maven
 ```
 
-Respuesta esperada:
+El endpoint inicial es:
+
+```text
+http://localhost:8080/api/health
+```
+
+Respuesta comprobada:
 
 ```json
 {
@@ -92,15 +81,15 @@ cd "C:\Users\lucan\Documents\Lucano\UNP Ciclo VI\Analisis y Diseño de Sistemas 
 mvn spring-boot:run
 ```
 
----
-
 ## Frontend
 
-| Tecnología | Versión |
-|------------|---------|
-| React      | —       |
-| Vite       | —       |
-| JavaScript | —       |
+El frontend está preparado con:
+
+```text
+React
+Vite
+JavaScript
+```
 
 Para ejecutarlo:
 
@@ -110,93 +99,171 @@ npm install
 npm run dev
 ```
 
-La aplicación estará disponible en:
+La aplicación estará disponible normalmente en:
 
 ```text
 http://localhost:5173
 ```
 
-El frontend consulta `/api/health` para verificar que el backend esté activo.
-
----
-
-## Arquitectura del sistema
+El frontend ya consulta:
 
 ```text
-React (frontend)
-  |
-  | HTTP / JSON
-  v
-Spring Boot REST API (backend)
-  |
-  | JPA / SQL parametrizado
-  v
-MariaDB / XAMPP (puerto 8012)
+/api/health
 ```
 
-### Responsabilidades por capa
+para comprobar que el backend está funcionando.
 
-| Capa        | Responsabilidad                                              |
-|-------------|--------------------------------------------------------------|
-| React       | Interfaz y experiencia de usuario                            |
-| Spring Boot | Reglas electorales, seguridad, transacciones, auditoría      |
-| MariaDB     | Persistencia, integridad referencial, índices, restricciones |
+También se ejecutó correctamente:
 
----
+```text
+npm run build
+```
 
-## Lógica electoral en Spring Boot (no en procedimientos almacenados)
+## ¿Procedimientos almacenados o lógica en Spring Boot?
 
-Se recomienda mantener la lógica en Spring Boot para facilitar pruebas, mantenimiento y trazabilidad. Los casos de uso que debe controlar Spring Boot son:
+Para este proyecto recomiendo una arquitectura híbrida, pero con la lógica principal en Spring Boot.
 
-- Validaciones de elegibilidad
-- Registro de candidaturas y tachas
-- Sorteos de mesas
-- Habilitación del padrón
-- Votación anónima (transacción atómica)
-- Generación de constancias QR
-- Impugnaciones y observaciones
-- Generación de actas
-- Reglas de segunda vuelta
-- Cálculo de resultados
+### Spring Boot debe encargarse de:
 
-### Ejemplo de transacción atómica para emisión de voto
+- Casos de uso.
+- Validaciones.
+- Roles y permisos.
+- Autenticación.
+- Registro de candidaturas.
+- Tachas.
+- Sorteos.
+- Impugnaciones.
+- Generación de constancias QR.
+- Generación de actas.
+- Reglas de segunda vuelta.
+- Cálculo de resultados.
+- Auditoría.
+- Transacciones.
+
+### MariaDB debe encargarse de:
+
+- Guardar datos.
+- Claves primarias.
+- Claves foráneas.
+- Restricciones `UNIQUE`.
+- Índices.
+- Tipos y estados.
+- Integridad referencial.
+
+## ¿Por qué no poner todo en procedimientos almacenados?
+
+No recomiendo construir todo el sistema con procedimientos almacenados porque:
+
+- La lógica queda escondida dentro de la base.
+- Es más difícil realizar pruebas unitarias.
+- Es más difícil mantener el proyecto.
+- Las reglas de permisos quedan mezcladas con SQL.
+- Se vuelve más complicado manejar errores.
+- El backend queda muy dependiente de MariaDB.
+- Las reglas de segunda vuelta, tachas y personeros son más claras en Java.
+
+Por ejemplo, esta lógica debe estar en Spring Boot:
+
+```text
+verificar si el docente puede votar
+obtener listas admitidas
+validar la lista seleccionada
+marcar participación
+registrar voto anónimo
+generar constancia
+registrar auditoría
+```
+
+## ¿Dónde sí usar una operación crítica de base de datos?
+
+La emisión del voto necesita consistencia para evitar doble votación.
+
+La lógica conceptual es:
+
+```text
+BEGIN TRANSACTION
+
+1. Bloquear el registro del padrón.
+2. Verificar que ya_voto = false.
+3. Cambiar ya_voto = true.
+4. Insertar el voto anónimo.
+5. Generar la constancia.
+6. Confirmar transacción.
+
+COMMIT
+```
+
+Si algo falla:
+
+```text
+ROLLBACK
+```
+
+En Spring Boot se puede manejar con:
 
 ```java
 @Transactional
 public ConstanciaVoto registrarVoto(...) {
-    // 1. Bloquear y verificar padrón (ya_voto = false)
-    // 2. Marcar ya_voto = true
-    // 3. Insertar voto anónimo
-    // 4. Generar constancia QR
+    // validar padrón
+    // marcar participación
+    // guardar voto anónimo
+    // generar constancia
 }
 ```
 
-Consulta SQL con bloqueo optimista para evitar doble voto:
+Para el bloqueo se puede utilizar una consulta con bloqueo pesimista o una actualización condicional:
 
 ```sql
 UPDATE padron_electoral
-SET    ya_voto         = TRUE,
-       fecha_votacion  = CURRENT_TIMESTAMP
-WHERE  id_proceso      = ?
-  AND  id_cargo        = ?
-  AND  id_docente      = ?
-  AND  habilitado_para_votar = TRUE
-  AND  ya_voto         = FALSE;
+SET ya_voto = TRUE,
+    fecha_votacion = CURRENT_TIMESTAMP
+WHERE id_proceso = ?
+  AND id_cargo = ?
+  AND id_docente = ?
+  AND habilitado_para_votar = TRUE
+  AND ya_voto = FALSE;
 ```
 
-Spring Boot verifica que se haya actualizado exactamente **una fila**; si no, revierte la transacción.
+Después Spring Boot verifica que se haya actualizado exactamente una fila.
 
----
+## Recomendación final
 
-## Orden de implementación recomendado
+La arquitectura debería quedar así:
 
-1. Configurar conexión y entidades JPA
-2. Implementar autenticación y roles (Spring Security + JWT)
-3. Implementar módulo de docentes y padrón
-4. Implementar procesos y cargos electorales
-5. Implementar listas y candidatos
-6. Implementar personeros
-7. Implementar sorteo de mesas
-8. Implementar votación anónima
-9. Implementar generación de QR / constancias
-10. Implementar actas, impugnaciones y resultados
+```text
+React
+  |
+  | HTTP/JSON
+  v
+Spring Boot REST API
+  |
+  | JPA / SQL parametrizado
+  v
+MariaDB
+```
+
+Y las responsabilidades:
+
+```text
+React:
+    interfaz y experiencia de usuario
+
+Spring Boot:
+    reglas electorales, seguridad y transacciones
+
+MariaDB:
+    persistencia e integridad de datos
+```
+
+Lo que ya está creado es una base inicial. Todavía no implementé autenticación, entidades JPA ni los módulos electorales porque conviene avanzar en este orden:
+
+1. Configurar conexión y entidades JPA.
+2. Implementar autenticación y roles.
+3. Implementar docentes y padrón.
+4. Implementar procesos y cargos.
+5. Implementar listas y candidatos.
+6. Implementar personeros.
+7. Implementar sorteo de mesas.
+8. Implementar votación anónima.
+9. Implementar QR.
+10. Implementar actas, impugnaciones y resultados.
