@@ -1,0 +1,65 @@
+# ========================
+# Java / Maven (Backend)
+# ========================
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# ========================
+# Node / Vite (Frontend)
+# ========================
+node_modules/
+dist/
+.vite/
+*.local
+
+# ========================
+# IDEs
+# ========================
+.idea/
+*.iml
+.vscode/settings.json
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.vs/
+
+# ========================
+# Sistema Operativo
+# ========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ========================
+# Variables de entorno / secretos
+# ========================
+.env
+.env.*
+!.env.example
+application-local.properties
+application-local.yml
+
+# ========================
+# Salidas de compilación
+# ========================
+out/
+build/
+*.class
+
+# ========================
+# Logs
+# ========================
+logs/
+*.log
+
+# ========================
+# PlantUML generados
+# ========================
+out/Documentacion del sistema/

@@ -1,0 +1,214 @@
+@startuml Diagrama_Clases_Diseno
+skinparam classAttributeIconSize 0
+
+package "Capa de Presentación (Boundary)" {
+    class EmisionVotoView {
+        + mostrarFormularioVoto(idProceso: int, idCargo: int)
+        + confirmarVoto(idLista: int)
+        + mostrarConstanciaQR()
+    }
+    class VerificacionQRView {
+        + verificarConstancia(token: String)
+        + mostrarResultado()
+    }
+    class SorteoMesaView {
+        + iniciarSorteo(idProceso: int)
+        + mostrarResultadosSorteo()
+    }
+    class InscripcionListaView {
+        + mostrarFormularioInscripcion(idCargo: int)
+        + confirmarInscripcion()
+    }
+    class PersoneroGeneralView {
+        + consultarEstadoLista()
+        + registrarObservacion()
+        + presentarApelacion()
+        + consultarActas()
+    }
+    class PersoneroMesaView {
+        + consultarMesaAsignada()
+        + registrarPresencia()
+        + registrarObservacion()
+        + presentarImpugnacion()
+        + consultarActaMesa()
+    }
+}
+
+package "Capa de Lógica de Negocio (Control)" {
+    class VotacionController {
+        + obtenerOpciones(idProceso: int, idCargo: int): List<ListaElectoral>
+        + validarHabilitacion(idProceso: int, idCargo: int, idDocente: int): boolean
+        + registrarVoto(idProceso: int, idCargo: int, idLista: int): ConstanciaVoto
+    }
+    class ConstanciaController {
+        + verificar(token: String): ResultadoVerificacion
+    }
+    class ParticipacionPersoneroController {
+        + registrarObservacion(idProceso: int, idMesa: int, descripcion: String): void
+        + presentarImpugnacion(idActa: int, motivo: String): void
+        + presentarApelacion(idImpugnacion: int, motivo: String): void
+        + consultarActas(idProceso: int): List<ActaElectoral>
+    }
+    class SorteoMesaController {
+        + ejecutarSorteo(idProceso: int, semilla: String): List<MesaElectoral>
+        - excluirCargosAdministrativos(candidatos: List<Docente>): List<Docente>
+        - excluirCandidatos(candidatos: List<Docente>): List<Docente>
+    }
+    class PadronController {
+        + generarPadronElectoral(idProceso: int, idCargo: int): void
+    }
+    class ProcesoElectoralController {
+        + crearProceso(nombre: String): ProcesoElectoral
+        + verificarQuorum(idProceso: int): boolean
+    }
+}
+
+package "Capa de Entidades (Entity)" {
+    class Docente
+    class CargoAdministrativo {
+        - nombreCargo: String
+        - nivel: String
+        - fechaInicio: Date
+        - fechaFin: Date
+        + estaVigente(): boolean
+    }
+    class CargoExcluidoSorteo
+    class ProcesoElectoral
+    class CargoElectoral {
+        - idProceso: int
+        - nombre: String
+        - nivelJurisdiccion: String
+    }
+    class CargoCategoriaPermitida
+    class ListaElectoral
+    class Candidato
+    class Tacha
+    class Personero
+    class ObservacionElectoral
+    class ImpugnacionElectoral
+    class PadronElectoral {
+        - idProceso: int
+        - idCargo: int
+        - idDocente: int
+        - habilitadoParaVotar: boolean
+        - yaVoto: boolean
+        - fechaVotacion: Date
+    }
+    class MesaElectoral {
+        - idProceso: int
+        - numeroMesa: String
+        - semillaSorteo: String
+    }
+    class MiembroMesa
+    class Voto {
+        - idProceso: int
+        - idCargo: int
+        - idListaElegida: int
+        - tipoVoto: String
+        - fechaHora: Date
+    }
+    class ActaElectoral {
+        - tipo: String
+        - contenidoJson: String
+        - hashIntegridad: String
+        - tokenQRHash: String
+    }
+    class FirmaActa
+    class ConstanciaVoto {
+        - idProceso: int
+        - idDocente: int
+        - idCargo: int
+        - tokenQRHash: String
+        - estado: String
+    }
+    class LogAuditoria
+    class Usuario
+    class SesionActiva
+}
+
+package "Capa de Acceso a Datos (Repository)" {
+    interface VotoRepository {
+        + guardar(idProceso: int, idCargo: int, idLista: int): void
+    }
+    interface PadronElectoralRepository {
+        + verificarHabilitacion(idProceso: int, idCargo: int, idDocente: int): boolean
+        + marcarComoVotado(idProceso: int, idCargo: int, idDocente: int): void
+        + generar(idProceso: int, idCargo: int): void
+    }
+    interface ListaElectoralRepository {
+        + obtenerAdmitidas(idCargo: int): List<ListaElectoral>
+    }
+    interface ConstanciaVotoRepository {
+        + emitir(idProceso: int, idCargo: int, idDocente: int): ConstanciaVoto
+        + verificar(token: String): ResultadoVerificacion
+    }
+    interface DocenteRepository
+    interface MesaElectoralRepository
+    interface ParticipacionPersoneroRepository
+}
+
+EmisionVotoView --> VotacionController
+VerificacionQRView --> ConstanciaController
+SorteoMesaView --> SorteoMesaController
+InscripcionListaView --> ProcesoElectoralController
+PersoneroGeneralView --> ParticipacionPersoneroController
+PersoneroMesaView --> ParticipacionPersoneroController
+
+VotacionController --> PadronElectoralRepository
+VotacionController --> ListaElectoralRepository
+VotacionController --> VotoRepository
+VotacionController --> ConstanciaVotoRepository
+ConstanciaController --> ConstanciaVotoRepository
+ParticipacionPersoneroController --> ParticipacionPersoneroRepository
+SorteoMesaController --> DocenteRepository
+SorteoMesaController --> MesaElectoralRepository
+PadronController --> PadronElectoralRepository
+
+Docente "1" -- "*" CargoAdministrativo
+CargoAdministrativo "*" -- "*" CargoExcluidoSorteo : "se contrasta"
+ProcesoElectoral "1" *-- "*" CargoElectoral
+CargoElectoral "1" -- "*" CargoCategoriaPermitida
+CargoElectoral "1" *-- "*" ListaElectoral
+ListaElectoral "1" *-- "1..*" Candidato
+Docente "1" -- "*" Candidato
+Docente "1" -- "*" Tacha : "denuncia"
+Candidato "1" -- "*" Tacha : "es tachado"
+ListaElectoral "1" -- "*" Personero
+Docente "1" -- "*" Personero
+Personero "1" -- "*" ObservacionElectoral
+Personero "1" -- "*" ImpugnacionElectoral
+MesaElectoral "1" -- "*" ObservacionElectoral
+MesaElectoral "1" -- "*" ImpugnacionElectoral
+ActaElectoral "0..1" -- "*" ObservacionElectoral
+ActaElectoral "0..1" -- "*" ImpugnacionElectoral
+ProcesoElectoral "1" -- "*" PadronElectoral
+CargoElectoral "1" -- "*" PadronElectoral
+Docente "1" -- "*" PadronElectoral
+ProcesoElectoral "1" *-- "*" MesaElectoral
+MesaElectoral "1" *-- "*" MiembroMesa
+Docente "1" -- "*" MiembroMesa
+ProcesoElectoral "1" -- "*" Voto
+CargoElectoral "1" -- "*" Voto
+ListaElectoral "0..1" -- "*" Voto : "opción elegida"
+MesaElectoral "1" *-- "3" ActaElectoral
+ActaElectoral "1" -- "*" FirmaActa
+Docente "1" -- "*" FirmaActa
+Docente "1" -- "*" ConstanciaVoto
+CargoElectoral "1" -- "*" ConstanciaVoto
+Usuario "1" -- "*" SesionActiva
+Docente "0..1" -- "0..1" Usuario
+
+note right of Voto
+  Voto no tiene relación con Docente,
+  Usuario, SesionActiva ni ConstanciaVoto.
+  La aplicación registra participación
+  y voto en operaciones separadas.
+end note
+
+note bottom of ConstanciaVoto
+  El QR contiene un token aleatorio.
+  La base almacena solo su hash.
+  No contiene la lista elegida.
+end note
+
+@enduml
